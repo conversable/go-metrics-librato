@@ -83,8 +83,7 @@ func (self *Reporter) BuildRequest(now time.Time, r metrics.Registry) (snapshot 
 		MeasureTime: (now.Unix() / self.intervalSec) * self.intervalSec,
 		Tags:        self.Tags,
 	}
-	snapshot.Gauges = make([]Measurement, 0)
-	snapshot.Counters = make([]Measurement, 0)
+	snapshot.Measurements = make([]Measurement, 0)
 	histogramGaugeCount := 1 + len(self.Percentiles)
 	r.Each(func(name string, metric interface{}) {
 		measurement := Measurement{}
@@ -99,16 +98,16 @@ func (self *Reporter) BuildRequest(now time.Time, r metrics.Registry) (snapshot 
 					DisplayUnitsShort: OperationsShort,
 					DisplayMin:        "0",
 				}
-				snapshot.Counters = append(snapshot.Counters, measurement)
+				snapshot.Measurements = append(snapshot.Measurements, measurement)
 			}
 		case metrics.Gauge:
 			measurement[Name] = name
 			measurement[Value] = float64(m.Value())
-			snapshot.Gauges = append(snapshot.Gauges, measurement)
+			snapshot.Measurements = append(snapshot.Measurements, measurement)
 		case metrics.GaugeFloat64:
 			measurement[Name] = name
 			measurement[Value] = float64(m.Value())
-			snapshot.Gauges = append(snapshot.Gauges, measurement)
+			snapshot.Measurements = append(snapshot.Measurements, measurement)
 		case metrics.Histogram:
 			if m.Count() > 0 {
 				gauges := make([]Measurement, histogramGaugeCount, histogramGaugeCount)
@@ -130,13 +129,13 @@ func (self *Reporter) BuildRequest(now time.Time, r metrics.Registry) (snapshot 
 						Period: measurement[Period],
 					}
 				}
-				snapshot.Gauges = append(snapshot.Gauges, gauges...)
+				snapshot.Measurements = append(snapshot.Measurements, gauges...)
 			}
 		case metrics.Meter:
 			measurement[Name] = name
 			measurement[Value] = float64(m.Count())
-			snapshot.Counters = append(snapshot.Counters, measurement)
-			snapshot.Gauges = append(snapshot.Gauges,
+			snapshot.Measurements = append(snapshot.Measurements, measurement)
+			snapshot.Measurements = append(snapshot.Measurements,
 				Measurement{
 					Name:   fmt.Sprintf("%s.%s", name, "1min"),
 					Value:  m.Rate1(),
@@ -171,7 +170,7 @@ func (self *Reporter) BuildRequest(now time.Time, r metrics.Registry) (snapshot 
 		case metrics.Timer:
 			measurement[Name] = name
 			measurement[Value] = float64(m.Count())
-			snapshot.Counters = append(snapshot.Counters, measurement)
+			snapshot.Measurements = append(snapshot.Measurements, measurement)
 			if m.Count() > 0 {
 				libratoName := fmt.Sprintf("%s.%s", name, "timer.mean")
 				gauges := make([]Measurement, histogramGaugeCount, histogramGaugeCount)
@@ -193,8 +192,8 @@ func (self *Reporter) BuildRequest(now time.Time, r metrics.Registry) (snapshot 
 						Attributes: self.TimerAttributes,
 					}
 				}
-				snapshot.Gauges = append(snapshot.Gauges, gauges...)
-				snapshot.Gauges = append(snapshot.Gauges,
+				snapshot.Measurements = append(snapshot.Measurements, gauges...)
+				snapshot.Measurements = append(snapshot.Measurements,
 					Measurement{
 						Name:   fmt.Sprintf("%s.%s", name, "rate.1min"),
 						Value:  m.Rate1(),

@@ -59,10 +59,9 @@ type Measurement map[string]interface{}
 type Metric map[string]interface{}
 
 type Batch struct {
-	Gauges      []Measurement     `json:"gauges,omitempty"`
-	Counters    []Measurement     `json:"counters,omitempty"`
-	MeasureTime int64             `json:"measure_time"`
-	Tags        map[string]string `json:"tags"`
+	Measurements []Measurement     `json:"measurements"`
+	MeasureTime  int64             `json:"time"`
+	Tags         map[string]string `json:"tags"`
 }
 
 func (self *LibratoClient) PostMetrics(batch Batch) (err error) {
@@ -72,7 +71,7 @@ func (self *LibratoClient) PostMetrics(batch Batch) (err error) {
 		resp *http.Response
 	)
 
-	if len(batch.Counters) == 0 && len(batch.Gauges) == 0 {
+	if len(batch.Measurements) == 0 {
 		return nil
 	}
 
